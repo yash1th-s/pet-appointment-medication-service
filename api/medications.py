@@ -6,9 +6,6 @@ from services import medication_service
 
 router = APIRouter()
 
-@router.get("/")
-async def med():
-    return {"Hello": "welcome to medication endpoint"}
 
 @router.post("/pet/{pet_id}/medication", status_code=201)
 async def create_medication_endpoint(pet_id: int, medication: Medication):

@@ -1,0 +1,14 @@
+---
+applications:
+  - name: petcare
+    memory: 1G
+    instances: 1
+    buildpacks:
+      - python_buildpack
+    path: .
+    routes:
+      - route: petcare.cfapps.us10-001.hana.ondemand.com 
+    command: uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+    env:
+      ENVIRONMENT: development
+      LOG_LEVEL: debug
