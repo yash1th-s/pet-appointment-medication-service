@@ -422,3 +422,120 @@ def get_reminder_by_id(reminder_id: int):
         "end_date": row[6],
         "status": row[7]
     }
+    
+    
+def update_reminder(reminder_id: int, reminder_data: dict):
+    """
+    Updates a recurring reminder in the database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Build the update query dynamically based on the provided fields
+    update_fields = []
+    values = []
+
+    if "title" in reminder_data:
+        update_fields.append("title = ?")
+        values.append(reminder_data["title"])
+    
+    if "description" in reminder_data:
+        update_fields.append("description = ?")
+        values.append(reminder_data["description"])
+
+    if "frequency" in reminder_data:
+        update_fields.append("frequency = ?")
+        values.append(reminder_data["frequency"])
+    
+    if "start_date" in reminder_data:
+        update_fields.append("start_date = ?")
+        values.append(reminder_data["start_date"])
+    
+    if "end_date" in reminder_data:
+        update_fields.append("end_date = ?")
+        values.append(reminder_data["end_date"])
+    
+    if "status" in reminder_data:
+        update_fields.append("status = ?")
+        values.append(reminder_data["status"])
+
+    if not update_fields:
+        raise ValueError("No valid fields to update")
+
+    # Complete the query
+    query = f"""
+        UPDATE PETSTORE.Reminders
+        SET {', '.join(update_fields)}
+        WHERE reminder_id = ?
+    """
+    values.append(reminder_id)
+
+    cursor.execute(query, tuple(values))
+    conn.commit()
+
+    # Check if the update affected any rows
+    if cursor.rowcount == 0:
+        raise ValueError(f"Reminder with ID {reminder_id} not found.")
+    
+    cursor.close()
+    conn.close()
+
+
+def delete_reminder(reminder_id: int):
+    """
+    Deletes a recurring reminder from the database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # SQL to delete the reminder
+    cursor.execute("""
+        DELETE FROM PETSTORE.Reminders
+        WHERE reminder_id = ?
+    """, (reminder_id,))
+
+    conn.commit()
+
+    # Check if any rows were affected (if the reminder existed)
+    if cursor.rowcount == 0:
+        raise ValueError(f"Reminder with ID {reminder_id} not found.")
+    
+    cursor.close()
+    conn.close()
+
+
+
+def get_reminders_by_user(user_id: int):
+    """
+    Retrieves all reminders for a specific user from the database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # SQL query to fetch reminders for the user
+    cursor.execute("""
+        SELECT reminder_id, user_id, title, description, frequency, start_date, end_date
+        FROM PETSTORE.Reminders
+        WHERE user_id = ?
+        ORDER BY start_date ASC
+    """, (user_id,))
+
+    # Fetch all rows
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Convert rows to list of dictionaries
+    reminders = [
+        {
+            "reminder_id": row[0],
+            "user_id": row[1],
+            "title": row[2],
+            "description": row[3],
+            "frequency": row[4],
+            "start_date": row[5],
+            "end_date": row[6]
+        }
+        for row in rows
+    ]
+    return reminders
