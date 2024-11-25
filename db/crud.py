@@ -1,6 +1,8 @@
 from db.connection import get_db_connection
 from datetime import datetime
 from models.appointment import Appointment, AppointmentUpdate
+from models.medication import Medication
+from models.reminder import Reminder
 
   
 def create_appointment(appointment: Appointment):
@@ -199,3 +201,224 @@ def get_appointments_by_pet(pet_id: int):
     ]
 
     return appointments
+
+
+
+def add_medication_for_pet(medication: Medication) -> int:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # SQL query to insert a new medication schedule into the database
+    cursor.execute("""
+        INSERT INTO PETSTORE.medications (pet_id, name, dosage, frequency, start_date, end_date, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        medication.pet_id,
+        medication.name,
+        medication.dosage,
+        medication.frequency,
+        medication.start_date,
+        medication.end_date,
+        medication.notes
+    ))
+
+    # Commit the transaction and retrieve the inserted medication id
+    conn.commit()
+    
+    cursor.execute(
+    """
+    SELECT MEDICATION_ID FROM PETSTORE.Medications
+    WHERE PET_ID = ? AND NAME = ? AND START_DATE = ?
+    ORDER BY MEDICATION_ID DESC
+    LIMIT 1
+    """,
+    (medication.pet_id, medication.name, medication.start_date)
+)
+
+# Fetch the last inserted ID
+    last_inserted_id = cursor.fetchone()[0]
+    medication_id = last_inserted_id
+
+    cursor.close()
+    conn.close()
+    return medication_id
+
+
+def get_medications_by_pet(pet_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT MEDICATION_ID, pet_id, name, dosage, frequency, start_date, end_date, notes
+        FROM PETSTORE.Medications
+        WHERE pet_id = ?
+    """, (pet_id,))
+    
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # If no medications found, return an empty list
+    if not rows:
+        return []
+
+    # Convert rows into list of dictionaries (or Medication models)
+    medications = [
+        {
+            "id": row[0],
+            "pet_id": row[1],
+            "name": row[2],
+            "dosage": row[3],
+            "frequency": row[4],
+            "start_date": row[5],
+            "end_date": row[6],
+            "notes": row[7]
+        }
+        for row in rows
+    ]
+    return medications
+
+
+def update_medication(medication_id: int, medication_data: dict):
+    """
+    Updates a specific medication schedule in the database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Dynamically build the update query based on provided fields
+    fields_to_update = []
+    for key, value in medication_data.items():
+        fields_to_update.append(f"{key} = ?")
+    
+    update_query = f"""
+        UPDATE PETSTORE.Medications
+        SET {', '.join(fields_to_update)}
+        WHERE MEDICATION_ID = ?
+    """
+
+    # Prepare parameters for the query
+    parameters = list(medication_data.values())
+    parameters.append(medication_id)
+
+    # Execute the update query
+    cursor.execute(update_query, parameters)
+    conn.commit()
+
+    # Check if any rows were affected
+    if cursor.rowcount == 0:
+        cursor.close()
+        conn.close()
+        raise ValueError("Medication not found")
+
+    cursor.close()
+    conn.close()
+    
+    
+    
+def delete_medication(pet_id: int, medication_id: int):
+    """
+    Deletes a medication schedule for a pet.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # SQL to delete the medication
+    cursor.execute("""
+        DELETE FROM PETSTORE.Medications
+        WHERE MEDICATION_ID = ? AND pet_id = ?
+    """, (medication_id, pet_id))
+    
+    # Commit the transaction
+    conn.commit()
+
+    # Check if a row was deleted
+    if cursor.rowcount == 0:
+        cursor.close()
+        conn.close()
+        raise ValueError("Medication not found")
+    
+    # Clean up
+    cursor.close()
+    conn.close()
+    
+    
+def create_reminder(reminder: Reminder):
+    """
+    Inserts a new reminder into the database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # SQL to insert the new reminder
+    insert_query = """
+        INSERT INTO PETSTORE.Reminders (user_id, title, description, frequency, start_date, end_date, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """
+    
+    cursor.execute(insert_query, (
+        reminder.user_id,
+        reminder.title,
+        reminder.description,
+        reminder.frequency,
+        reminder.start_date,
+        reminder.end_date,
+        reminder.status
+    ))
+    
+    # Commit the transaction and get the inserted ID
+    conn.commit()
+    cursor.execute(
+    """
+    SELECT REMINDER_ID FROM PETSTORE.Reminders
+    WHERE USER_ID = ? AND TITLE = ? AND START_DATE = ?
+    ORDER BY REMINDER_ID DESC
+    LIMIT 1
+    """,
+    (reminder.user_id, reminder.title, reminder.start_date)
+)
+
+# Fetch the last inserted ID
+    last_inserted_id = cursor.fetchone()[0]
+    reminder_id = last_inserted_id
+
+    cursor.close()
+    conn.close()
+    return reminder_id
+
+
+
+def get_reminder_by_id(reminder_id: int):
+    """
+    Retrieves a reminder by its ID from the database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # SQL query to fetch the reminder
+    query = """
+        SELECT reminder_id, user_id, title, description, frequency, start_date, end_date, status
+        FROM PETSTORE.Reminders
+        WHERE reminder_id = ?
+    """
+    
+    cursor.execute(query, (reminder_id,))
+    row = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    if row is None:
+        return None
+    
+    # Return the row as a dictionary
+    return {
+        "reminder_id": row[0],
+        "user_id": row[1],
+        "title": row[2],
+        "description": row[3],
+        "frequency": row[4],
+        "start_date": row[5],
+        "end_date": row[6],
+        "status": row[7]
+    }

@@ -74,9 +74,6 @@ async def get_user_appointments(user_id: int):
 async def get_pet_appointments(pet_id: int):
     try:
         # Get all upcoming appointments for the pet
-        # It looks like there is a typo in the code snippet. The line `appointments =
-        # appointment_serviceget_appointments_for_pet(pet_id)` should be corrected to `appointments =
-        # appointment_service.get_appointments_for_pet(pet_id)`.
         appointments = appointment_service.get_appointments_for_pet(pet_id)
         return {"appointments": appointments}
     except ValueError as e:

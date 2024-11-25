@@ -33,7 +33,7 @@ def get_upcoming_appointments(user_id: int) -> list[Appointment]:
     
     if not appointments:
         raise ValueError("No upcoming appointments found for this user")
-    return appointments
+    return appointmentsappo
 
 
 def get_appointments_for_pet(pet_id: int) -> list[dict]:
