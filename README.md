@@ -73,9 +73,15 @@ The system is designed using the microservices architecture with the following c
 
 Define environment variables in a `.env` file:
 ```env
-DATABASE_URL=hana://username:password@host:port/dbname
-APP_ENV=development
-SECRET_KEY=your_secret_key
+ENV=development
+DEBUG=True
+DATABASE_HOST=ENV=development
+DEBUG=True
+DATABASE_HOST=DATABASE_HOST
+DATABASE_PORT=DATABASE_PORT
+DATABASE_USER=DATABASE_USER
+DATABASE_PASSWORD=DATABASE_PASSWORD
+DATABASE_NAME=DATABASE_NAME
 ```
 
 ---
