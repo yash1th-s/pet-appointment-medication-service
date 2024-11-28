@@ -75,8 +75,6 @@ Define environment variables in a `.env` file:
 ```env
 ENV=development
 DEBUG=True
-DATABASE_HOST=ENV=development
-DEBUG=True
 DATABASE_HOST=DATABASE_HOST
 DATABASE_PORT=DATABASE_PORT
 DATABASE_USER=DATABASE_USER
