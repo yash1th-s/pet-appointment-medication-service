@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petcare-deployment
+  labels:
+    app: petcare-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: petcare-app
+  template:
+    metadata:
+      labels:
+        app: petcare-app
+    spec:
+      containers:
+      - name: petcare-container
+        image: yash1ths/petcare
+        ports:
+        - containerPort: 8000
