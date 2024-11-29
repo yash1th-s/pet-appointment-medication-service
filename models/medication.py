@@ -8,7 +8,6 @@ class Medication(BaseModel):
     Represents a medication schedule for a pet. Contains details about 
     the medication, its dosage, frequency, and start/end dates.
     """
-    pet_id: int  # Foreign key for the pet
     name: str  # Name of the medication
     dosage: str  # Dosage instructions (e.g., "1 tablet", "5 ml")
     frequency: str  # Frequency of the medication (e.g., "Once daily", "Twice weekly")
@@ -32,7 +31,7 @@ class MedicationOut(BaseModel):
     that will be returned in the response after the medication is created.
     """
     medication_id: int
-    pet_id: int
+    pet_id: str
     name: str
     dosage: str
     frequency: str

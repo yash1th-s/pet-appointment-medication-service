@@ -3,8 +3,9 @@ from fastapi import HTTPException, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 import httpx
+import jwt
 
-AUTH_SERVICE_URL = "http://a487d8b00bc6542ca91c2dd298684952-1223040857.us-east-1.elb.amazonaws.com/verify-token"  
+AUTH_SERVICE_URL = "http://a487d8b00bc6542ca91c2dd298684952-1223040857.us-east-1.elb.amazonaws.com/api/users/verify-token"  
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -24,16 +25,18 @@ class AuthMiddleware(BaseHTTPMiddleware):
         
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.post(AUTH_SERVICE_URL, json={"token": token})
+                response = await client.get(AUTH_SERVICE_URL, headers={"Authorization": f"Bearer {token}"})
                 if response.status_code != 200:
                     return Response(
                         content='{"detail": "Unauthorized"}',
                         status_code=401,
                         media_type="application/json"
                     )
-                
-                user_data = response.json()  # Optional if user info is needed
-                request.state.user = user_data  # Store the user info if required
+                decoded_token = jwt.decode(token, options={"verify_signature": False})
+                user_id = decoded_token.get("userId")
+                if not user_id:
+                    raise HTTPException(status_code=401, detail="User ID not found in token")
+                request.state.user_id = user_id
         except httpx.RequestError as e:
             return Response(
                 content=f'{{"detail": "Auth service unreachable: {e}"}}',

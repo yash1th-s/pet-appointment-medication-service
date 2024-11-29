@@ -9,6 +9,8 @@ app = FastAPI()
 app.add_middleware(AuthMiddleware)
 
 app.include_router(appointments.router, prefix="/appointment", tags=["appointments"])
+app.include_router(appointments.user_appointment_router, tags=["appointments"])
+app.include_router(appointments.pet_appointment_router, tags=["appointments"])
 app.include_router(medications.router, tags=["medications"])
 app.include_router(reminders.router, prefix="/reminder", tags=["reminders"])
 app.include_router(reminders.user_reminders_router, tags=["user-reminders"])

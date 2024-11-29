@@ -1,8 +1,8 @@
 from db.crud import create_appointment, get_appointment_by_id, update_appointment, delete_appointment, get_upcoming_appointments_by_user, get_appointments_by_pet
 from models.appointment import Appointment, AppointmentUpdate
 
-def schedule_appointment(appointment: Appointment):    
-    create_appointment(appointment)
+def schedule_appointment(user_id: str, appointment: Appointment):    
+    create_appointment(user_id, appointment)
     
 def get_appointment_details(appointment_id: int) -> Appointment:
     # Retrieve the appointment details from the database
@@ -27,7 +27,7 @@ def cancel_appointment(appointment_id: int):
         raise ValueError("Appointment not found")
     
 
-def get_upcoming_appointments(user_id: int) -> list[Appointment]:
+def get_upcoming_appointments(user_id: str) -> list[Appointment]:
     # Retrieve upcoming appointments from the database
     appointments = get_upcoming_appointments_by_user(user_id)
     
@@ -36,7 +36,7 @@ def get_upcoming_appointments(user_id: int) -> list[Appointment]:
     return appointments
 
 
-def get_appointments_for_pet(pet_id: int) -> list[dict]:
+def get_appointments_for_pet(pet_id: str) -> list[dict]:
     # Retrieve upcoming appointments for the pet
     appointments = get_appointments_by_pet(pet_id)
     if not appointments:

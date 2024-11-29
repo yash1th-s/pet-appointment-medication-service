@@ -8,14 +8,11 @@ router = APIRouter()
 
 
 @router.post("/pet/{pet_id}/medication", status_code=201)
-async def create_medication_endpoint(pet_id: int, medication: Medication):
+async def create_medication_endpoint(pet_id: str, medication: Medication):
     try:
-        # Ensure the pet_id in the URL matches the request body
-        if pet_id != medication.pet_id:
-            raise HTTPException(status_code=400, detail="Pet ID mismatch between path and body.")
-
+        
         # Call the service layer to handle the logic
-        medication_id = medication_service.add_medication(medication)
+        medication_id = medication_service.add_medication(pet_id, medication)
         return {"message": "Medication added successfully", "medication_id": medication_id}
     except HTTPException as he:
         raise he
@@ -24,7 +21,7 @@ async def create_medication_endpoint(pet_id: int, medication: Medication):
     
     
 @router.get("/pet/{pet_id}/medications")
-async def get_pet_medications(pet_id: int):
+async def get_pet_medications(pet_id: str):
     try:
         # Get all medication schedules for the pet
         medications = medication_service.get_medications_for_pet(pet_id)
@@ -38,7 +35,7 @@ async def get_pet_medications(pet_id: int):
     
 
 @router.put("/pet/{pet_id}/medication/{medication_id}")
-async def update_medication_endpoint(pet_id: int, medication_id: int, medication_update: MedicationUpdate):
+async def update_medication_endpoint(pet_id: str, medication_id: int, medication_update: MedicationUpdate):
     try:
         # Convert the MedicationUpdate object to a dictionary and remove None values
         update_data = {key: value for key, value in medication_update.dict().items() if value is not None}
@@ -49,7 +46,7 @@ async def update_medication_endpoint(pet_id: int, medication_id: int, medication
         # Call the service layer to update the medication schedule
         medication_service.update_medication_schedule(medication_id, update_data)
 
-        return {"message": "Medication schedule updated successfully"}
+        return {"message": "Medication updated successfully"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -57,7 +54,7 @@ async def update_medication_endpoint(pet_id: int, medication_id: int, medication
     
     
 @router.delete("/pet/{pet_id}/medication/{medication_id}", status_code=200)
-async def delete_medication_endpoint(pet_id: int, medication_id: int):
+async def delete_medication_endpoint(pet_id: str, medication_id: int):
     """
     Endpoint to delete a medication schedule for a pet.
     """

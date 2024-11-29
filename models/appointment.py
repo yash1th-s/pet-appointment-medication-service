@@ -9,9 +9,10 @@ class Appointment(BaseModel):
     the appointment, including the pet, user, scheduled time, description, 
     and the current status of the appointment.
     """
-    pet_id: int  # Foreign key for the pet
-    user_id: int  # Foreign key for the user
+    pet_id: str  # Foreign key for the pet
     type: str  # Type of the appointment
+    doctor_name: Optional[str] = None
+    clinic: Optional[str] = None
     description: Optional[str] = None  # Details about the appointment
     date_time: datetime  # Date and time of the appointment
     status: str  # Status of the appointment
@@ -19,6 +20,8 @@ class Appointment(BaseModel):
     
 class AppointmentUpdate(BaseModel):
     type: Optional[str] = None 
+    doctor_name: Optional[str] = None
+    clinic: Optional[str] = None
     description: Optional[str] = None # Appointment type can be updated
     date_time: Optional[datetime] = None       # Appointment date can be updated
     status: Optional[str] = None          # Appointment status an be updated

@@ -1,15 +1,19 @@
 # api/appointments.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from models.appointment import Appointment, AppointmentUpdate
 from services import appointment_service
 
 router = APIRouter()
 
-@router.post("/", status_code=201)
-async def create_appointment_endpoint(appointment: Appointment):
+@router.post("", status_code=201)
+async def create_appointment_endpoint(request: Request, appointment: Appointment ):
     try:
+        user_id = getattr(request.state, "user_id", None)  # Get the user_id from request.state
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User ID is missing")
+        
         # Call the service layer to handle appointment scheduling
-        appointment_service.schedule_appointment(appointment)
+        appointment_service.schedule_appointment(user_id, appointment)
         return {"message": "Appointment scheduled successfully", "appointment": appointment.dict()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -55,9 +59,14 @@ async def cancel_appointment_endpoint(appointment_id: int):
         # Handle other errors (e.g., database issues)
         raise HTTPException(status_code=500, detail="An error occurred while canceling the appointment")
 
+user_appointment_router = APIRouter()
 
-@router.get("/user/{user_id}/appointments")
-async def get_user_appointments(user_id: int):
+@user_appointment_router.get("/user/appointments")
+async def get_user_appointments(request: Request):
+    
+    user_id = getattr(request.state, "user_id", None)  # Get the user_id from request.state
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID is missing")
     try:
         # Get all upcoming appointments for the user
         appointments = appointment_service.get_upcoming_appointments(user_id)
@@ -69,9 +78,10 @@ async def get_user_appointments(user_id: int):
         # Handle other errors (e.g., database issues)
         raise HTTPException(status_code=500, detail="An error occurred while retrieving appointments")
     
+pet_appointment_router = APIRouter()
 
-@router.get("/pet/{pet_id}/appointments")
-async def get_pet_appointments(pet_id: int):
+@pet_appointment_router.get("/pet/{pet_id}/appointments")
+async def get_pet_appointments(pet_id: str):
     try:
         # Get all upcoming appointments for the pet
         appointments = appointment_service.get_appointments_for_pet(pet_id)

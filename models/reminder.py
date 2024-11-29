@@ -7,7 +7,6 @@ class Reminder(BaseModel):
     Represents a recurring reminder. Includes details about the reminder
     and its schedule.
     """
-    user_id: int  # Foreign key for the user the reminder belongs to
     title: str  # Title of the reminder (e.g., "Monthly Flea Prevention")
     description: Optional[str] = None  # Additional details about the reminder
     frequency: str  # Frequency of the reminder (e.g., "monthly", "weekly")

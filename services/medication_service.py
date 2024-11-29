@@ -2,16 +2,16 @@ from db.crud import add_medication_for_pet, get_medications_by_pet, update_medic
 from models.medication import Medication, MedicationOut
 from fastapi import HTTPException
 
-def add_medication(medication: Medication):
+def add_medication(pet_id: str, medication: Medication):
     try:
         # Call CRUD function to add medication
-        medication_id = add_medication_for_pet(medication)
+        medication_id = add_medication_for_pet(pet_id, medication)
         return medication_id
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to add medication: {str(e)}")
     
     
-def get_medications_for_pet(pet_id: int) -> list:
+def get_medications_for_pet(pet_id: str) -> list:
     medications = get_medications_by_pet(pet_id)
     if not medications:
         raise ValueError("No medications found for this pet")
@@ -30,7 +30,7 @@ def update_medication_schedule(medication_id: int, medication_data: dict):
         raise Exception(f"An error occurred while updating the medication: {e}")
     
 
-def remove_medication(pet_id: int, medication_id: int):
+def remove_medication(pet_id: str, medication_id: int):
     """
     Service to delete a medication schedule.
     """

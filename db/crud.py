@@ -5,7 +5,7 @@ from models.medication import Medication
 from models.reminder import Reminder
 
   
-def create_appointment(appointment: Appointment):
+def create_appointment(user_id: str, appointment: Appointment):
     """
     Creates a new appointment in the database.
     """
@@ -15,12 +15,14 @@ def create_appointment(appointment: Appointment):
     
     # SQL to insert the new appointment into the appointments table
     cursor.execute("""
-        INSERT INTO PETSTORE.Appointments (pet_id, user_id, type, description, date_time, status)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO PETSTORE.Appointments (pet_id, user_id, type, doctor_name, clinic, description, date_time, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         appointment.pet_id,
-        appointment.user_id,
+        user_id,
         appointment.type,
+        appointment.doctor_name,
+        appointment.clinic,
         appointment.description,
         appointment.date_time,
         appointment.status
@@ -43,9 +45,9 @@ def get_appointment_by_id(appointment_id: int):
     
     # SQL to retrieve an appointment based on the ID
     cursor.execute("""
-        SELECT id, pet_id, user_id, type, description, date_time, status
+        SELECT appointment_id, pet_id, type, doctor_name, clinic, description, date_time, status
         FROM PETSTORE.Appointments
-        WHERE id = ?
+        WHERE appointment_id = ?
     """, (appointment_id,))
     
     # Fetch the result
@@ -63,11 +65,12 @@ def get_appointment_by_id(appointment_id: int):
     return Appointment(
         id=row[0],
         pet_id=row[1],
-        user_id=row[2],
-        type=row[3],
-        description=row[4],
-        date_time=row[5],
-        status=row[6]
+        type=row[2],
+        doctor_name=row[3],
+        clinic=row[4],
+        description=row[5],
+        date_time=row[6],
+        status=row[7]
     )
     
     
@@ -82,6 +85,12 @@ def update_appointment(appointment_id: int, appointment: AppointmentUpdate):
     
     if appointment.type is not None:
         query += f"type = '{appointment.type}', "
+        
+    if appointment.doctor_name is not None:
+        query += f"doctor_name = '{appointment.doctor_name}', "
+        
+    if appointment.clinic is not None:
+        query += f"clinic = '{appointment.type}', "
     
     if appointment.description is not None:
         query += f"description = '{appointment.type}', "
@@ -95,10 +104,8 @@ def update_appointment(appointment_id: int, appointment: AppointmentUpdate):
     # Remove trailing comma and space from the query string
     query = query.rstrip(", ")
 
-    query += f" WHERE id = {appointment_id}"
-    
-    
-    
+    query += f" WHERE appointment_id = {appointment_id}"
+        
     # Execute the query
     cursor.execute(query)
     conn.commit()
@@ -121,7 +128,7 @@ def delete_appointment(appointment_id: int):
     # SQL to delete the appointment from the appointments table
     cursor.execute("""
         DELETE FROM PETSTORE.Appointments
-        WHERE id = ?
+        WHERE appointment_id = ?
     """, (appointment_id,))
     
     conn.commit()
@@ -137,14 +144,14 @@ def delete_appointment(appointment_id: int):
 
 
 
-def get_upcoming_appointments_by_user(user_id: int):
+def get_upcoming_appointments_by_user(user_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute(f"""
-        SELECT id, pet_id, type, date_time, description, status
+        SELECT appointment_id, pet_id, type, doctor_name, clinic, description, date_time, status
         FROM PETSTORE.Appointments
-        WHERE user_id = {user_id} AND date_time >= '{datetime.now()}'
+        WHERE user_id = '{user_id}' AND date_time >= '{datetime.now()}'
         ORDER BY date_time ASC
     """)
     
@@ -160,9 +167,11 @@ def get_upcoming_appointments_by_user(user_id: int):
             "appointment_id": row[0],
             "pet_id": row[1],
             "type": row[2],
-            "date_time": row[3],
-            "description": row[4],
-            "status": row[5]
+            "doctor_name": row[3],
+            "clinic": row[4],
+            "date_time": row[5],
+            "description": row[6],
+            "status": row[7]
         }
         for row in rows
     ]
@@ -170,7 +179,7 @@ def get_upcoming_appointments_by_user(user_id: int):
     return appointments
 
 
-def get_appointments_by_pet(pet_id: int):
+def get_appointments_by_pet(pet_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -204,7 +213,7 @@ def get_appointments_by_pet(pet_id: int):
 
 
 
-def add_medication_for_pet(medication: Medication) -> int:
+def add_medication_for_pet(pet_id: str, medication: Medication) -> int:
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -213,7 +222,7 @@ def add_medication_for_pet(medication: Medication) -> int:
         INSERT INTO PETSTORE.medications (pet_id, name, dosage, frequency, start_date, end_date, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (
-        medication.pet_id,
+        pet_id,
         medication.name,
         medication.dosage,
         medication.frequency,
@@ -232,7 +241,7 @@ def add_medication_for_pet(medication: Medication) -> int:
     ORDER BY MEDICATION_ID DESC
     LIMIT 1
     """,
-    (medication.pet_id, medication.name, medication.start_date)
+    (pet_id, medication.name, medication.start_date)
 )
 
 # Fetch the last inserted ID
@@ -244,7 +253,7 @@ def add_medication_for_pet(medication: Medication) -> int:
     return medication_id
 
 
-def get_medications_by_pet(pet_id: int):
+def get_medications_by_pet(pet_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -316,7 +325,7 @@ def update_medication(medication_id: int, medication_data: dict):
     
     
     
-def delete_medication(pet_id: int, medication_id: int):
+def delete_medication(pet_id: str, medication_id: int):
     """
     Deletes a medication schedule for a pet.
     """
@@ -343,7 +352,7 @@ def delete_medication(pet_id: int, medication_id: int):
     conn.close()
     
     
-def create_reminder(reminder: Reminder):
+def create_reminder(user_id: str, reminder: Reminder):
     """
     Inserts a new reminder into the database.
     """
@@ -357,7 +366,7 @@ def create_reminder(reminder: Reminder):
     """
     
     cursor.execute(insert_query, (
-        reminder.user_id,
+        user_id,
         reminder.title,
         reminder.description,
         reminder.frequency,
@@ -375,7 +384,7 @@ def create_reminder(reminder: Reminder):
     ORDER BY REMINDER_ID DESC
     LIMIT 1
     """,
-    (reminder.user_id, reminder.title, reminder.start_date)
+    (user_id, reminder.title, reminder.start_date)
 )
 
 # Fetch the last inserted ID
@@ -505,7 +514,7 @@ def delete_reminder(reminder_id: int):
 
 
 
-def get_reminders_by_user(user_id: int):
+def get_reminders_by_user(user_id: str):
     """
     Retrieves all reminders for a specific user from the database.
     """

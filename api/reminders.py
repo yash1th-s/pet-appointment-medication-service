@@ -1,18 +1,22 @@
 # api/appointments.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from models.reminder import Reminder, ReminderUpdate
 from services import reminder_service
 
 
 router = APIRouter()
 
-@router.post("/", status_code=201)
-async def create_reminder_endpoint(reminder: Reminder):
+@router.post("", status_code=201)
+async def create_reminder_endpoint(request: Request, reminder: Reminder):
     """
     API endpoint to create a new recurring reminder.
     """
+    
+    user_id = getattr(request.state, "user_id", None)  # Get the user_id from request.state
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID is missing")
     try:
-        reminder_id = reminder_service.add_reminder(reminder)
+        reminder_id = reminder_service.add_reminder(user_id, reminder)
         return {"message": "Reminder created successfully", "reminder_id": reminder_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -71,11 +75,14 @@ async def delete_reminder_endpoint(reminder_id: int):
 
 user_reminders_router = APIRouter()
 
-@user_reminders_router.get("/user/{user_id}/reminders")
-async def get_user_reminders_endpoint(user_id: int):
+@user_reminders_router.get("/user/reminders")
+async def get_user_reminders_endpoint(request: Request):
     """
     API endpoint to retrieve all reminders for a specific user.
     """
+    user_id = getattr(request.state, "user_id", None)  # Get the user_id from request.state
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID is missing")
     try:
         # Call the service layer to fetch reminders
         reminders = reminder_service.get_user_reminders(user_id)

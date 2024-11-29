@@ -3,13 +3,13 @@ from models.reminder import Reminder
 from fastapi import HTTPException
 
 
-def add_reminder(reminder: Reminder) -> int:
+def add_reminder(user_id: str, reminder: Reminder) -> int:
     """
     Calls the CRUD function to create a reminder.
     Returns the ID of the created reminder.
     """
     try:
-        reminder_id = create_reminder(reminder)
+        reminder_id = create_reminder(user_id, reminder)
         return reminder_id
     except Exception as e:
         raise RuntimeError(f"Failed to add reminder: {e}")
@@ -49,7 +49,7 @@ def remove_reminder(reminder_id: int):
         raise ValueError(str(e))
     
     
-def get_user_reminders(user_id: int):
+def get_user_reminders(user_id: str):
     """
     Service function to retrieve all reminders for a specific user.
     """
