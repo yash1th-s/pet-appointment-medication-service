@@ -1,15 +1,33 @@
 # api/appointments.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from models.medication import Medication, MedicationOut, MedicationUpdate
 from services import medication_service
+import httpx
 
 
 router = APIRouter()
 
 
 @router.post("/pet/{pet_id}/medication", status_code=201)
-async def create_medication_endpoint(pet_id: str, medication: Medication):
+async def create_medication_endpoint(pet_id: str, medication: Medication, request: Request):
     try:
+        # Get the Authorization token (if it exists)
+        token = getattr(request.state, "token", None)
+        
+        
+        # Call external service to check if the pet exists using the provided pet_id
+        pet_exists_url = f"http://a487d8b00bc6542ca91c2dd298684952-1223040857.us-east-1.elb.amazonaws.com/api/pets/{pet_id}"
+        
+        headers = {
+            "Authorization": f"Bearer {token}",  # Set the Authorization header with the token
+        }
+
+        # Make the GET request to check if the pet exists
+        async with httpx.AsyncClient() as client:
+            response = await client.get(pet_exists_url, headers=headers)
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=404, detail="Pet not found")
         
         # Call the service layer to handle the logic
         medication_id = medication_service.add_medication(pet_id, medication)

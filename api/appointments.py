@@ -2,6 +2,8 @@
 from fastapi import APIRouter, HTTPException, Request
 from models.appointment import Appointment, AppointmentUpdate
 from services import appointment_service
+import httpx
+
 
 router = APIRouter()
 
@@ -11,6 +13,22 @@ async def create_appointment_endpoint(request: Request, appointment: Appointment
         user_id = getattr(request.state, "user_id", None)  # Get the user_id from request.state
         if not user_id:
             raise HTTPException(status_code=401, detail="User ID is missing")
+        
+        # Get the Authorization token (if it exists)
+        token = getattr(request.state, "token", None)
+        
+        # Call external service to check if the pet exists using the provided pet_id
+        pet_exists_url = f"http://a487d8b00bc6542ca91c2dd298684952-1223040857.us-east-1.elb.amazonaws.com/api/pets/{appointment.pet_id}"
+        headers = {
+            "Authorization": f"Bearer {token}",  # Set the Authorization header with the token
+        }
+        # Make the GET request to check if the pet exists
+        async with httpx.AsyncClient() as client:
+            response = await client.get(pet_exists_url, headers=headers)
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=404, detail="Pet not found")
+        
         
         # Call the service layer to handle appointment scheduling
         appointment_service.schedule_appointment(user_id, appointment)
